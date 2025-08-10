@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Entries | Shared Expenses</title>
+  <link rel="stylesheet" href="assets/css/global.css" />
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: var(--font-main);
+      padding: 20px;
+      
+      display: block;
+    }
+    h2 {
+      text-align: center;
+      color: #fc5b00;
+      margin-bottom: 20px;
+    }
+    .entry {
+      background: #1e1e1e;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .entry strong {
+      color: #fb6100;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 16px;
+      background: linear-gradient(90deg, #f09400, #fc5b00);
+      color: white;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .backu {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+  </style>
+</head>
+<body>
+  <h2>All Expense Entries</h2>
+  <div class="backu">
+  <a href="dashboard.html" class="btn">⬅ Back to Dashboard</a>
+</div>
+  <div id="entriesContainer">Loading entries...</div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://lcvdimgrajtskmbhwnxh.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdmRpbWdyYWp0c2ttYmh3bnhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5OTQ4MTEsImV4cCI6MjA2OTU3MDgxMX0.JlNHo01Xjn8HehF3fWojrNUhkzssqq6K8gn1D8nZQLU';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    async function renderEntries() {
+      const container = document.getElementById("entriesContainer");
+      container.innerHTML = "Loading entries...";
+
+      const { data: entries, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (error) {
+        container.innerHTML = "Error loading entries.";
+        console.error(error);
+        return;
+      }
+
+      container.innerHTML = "";
+
+      if (!entries || entries.length === 0) {
+        container.innerHTML = "<p>No entries found.</p>";
+        return;
+      }
+
+      entries.forEach(entry => {
+        const div = document.createElement("div");
+        const perPerson = (entry.amount / entry.friends.length).toFixed(2);
+        div.className = "entry";
+        div.innerHTML = `
+          <strong>${entry.title}</strong><br>
+          <small>${new Date(entry.date).toLocaleString()}</small><br>
+          Total: ₹${entry.amount}<br>
+          Friends: ${entry.friends.join(", ")}<br>
+          <span style="color:#4caf50;"><strong>Per Person:</strong> ₹${perPerson}</span>
+        <small style="color:#aaa;text-align: end;width: 100%;display: block;">Created by: ${entry.shared_by || "Unknown"}</small>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    renderEntries();
+  </script>
+
+  <script>
+    // Protect page from unauthenticated access
+    if (sessionStorage.getItem("loggedIn") !== "true") {
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
